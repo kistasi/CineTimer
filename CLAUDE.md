@@ -12,13 +12,13 @@ All build, test, and run operations go through Xcode or `xcodebuild`. There is n
 
 ```bash
 # Build (simulator)
-xcodebuild -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' build
 
 # Run unit tests
-xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:CineTimerTests
+xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:CineTimerTests
 
 # Run UI tests
-xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:CineTimerUITests
+xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:CineTimerUITests
 ```
 
 Open `CineTimer.xcodeproj` in Xcode to build and run interactively.
