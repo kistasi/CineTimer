@@ -1,10 +1,3 @@
-//
-//  CineTimerApp.swift
-//  CineTimer
-//
-//  Created by tasi on 2026. 06. 09..
-//
-
 import SwiftUI
 import SwiftData
 

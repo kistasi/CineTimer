@@ -1,10 +1,3 @@
-//
-//  CineTimerUITests.swift
-//  CineTimerUITests
-//
-//  Created by tasi on 2026. 06. 09..
-//
-
 import XCTest
 
 final class CineTimerUITests: XCTestCase {
