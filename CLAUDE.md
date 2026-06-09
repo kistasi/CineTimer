@@ -40,7 +40,7 @@ Computed properties (`filmStart`, `filmEnd`) and the `status(at:) -> FilmStatus`
 
 ### Views
 
-- **`ContentView`** — film list sorted by `startTime`. Each `FilmRow` shows a status badge and, when playing, a live 4pt green progress bar. Uses `TimelineView(.periodic(from:by:1))` for 1-second updates. Swipe-left reveals Edit (orange) and Delete (red) actions.
+- **`ContentView`** — film list sorted by `startTime`. Each `FilmRow` shows a status badge and, when playing, a live 4pt green progress bar. Uses `TimelineView(.periodic(from:by:1))` for 1-second updates. Swipe-left reveals Delete (red) and Edit (orange) actions.
 - **`AddFilmView`** — handles both add and edit via `init(film: Film? = nil)`. Runtime entry has two modes (switchable via segmented control): a plain minutes text field or hour/minute steppers. Trailer buffer is a stepper (0–60 min, step 5).
 - **`FilmTimerView`** — the main timer screen. Updates every second via `TimelineView`. Disables the idle timer (`UIApplication.shared.isIdleTimerDisabled`) while visible. Shows contextual content per state: countdown cards when upcoming/in-trailers, a large `%` seen + progress bar + remaining time + end time when playing. Pencil toolbar button opens the edit sheet.
 
