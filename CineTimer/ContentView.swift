@@ -99,10 +99,7 @@ private struct FilmRow: View {
     private var subtitle: String {
         let start = film.startTime.formatted(date: .omitted, time: .shortened)
         let end = film.filmEnd.formatted(date: .omitted, time: .shortened)
-        let h = film.runningTime / 60
-        let m = film.runningTime % 60
-        let duration = h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
-        return "\(start) · \(duration) · ends \(end)"
+        return "\(start) · \(film.formattedDuration) · ends \(end)"
     }
 
     @ViewBuilder

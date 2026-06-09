@@ -12,12 +12,20 @@ enum FilmStatus {
 final class Film {
     var title: String
     var runningTime: Int  // minutes
-    var startTime: Date   // when trailers/commercials begin
+    var startTime: Date
 
     var trailerBuffer: Int = 15  // minutes before the film begins
 
     var filmStart: Date { startTime.addingTimeInterval(Double(trailerBuffer) * 60) }
     var filmEnd: Date   { filmStart.addingTimeInterval(Double(runningTime) * 60) }
+    var formattedDuration: String { Film.formatMinutes(runningTime) }
+
+    static func formatMinutes(_ minutes: Int) -> String {
+        let h = minutes / 60
+        let m = minutes % 60
+        if h > 0 { return m > 0 ? "\(h)h \(m)m" : "\(h)h" }
+        return "\(m)m"
+    }
 
     func status(at date: Date = .now) -> FilmStatus {
         if date < startTime {

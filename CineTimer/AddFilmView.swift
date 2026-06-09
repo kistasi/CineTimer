@@ -42,9 +42,7 @@ struct AddFilmView: View {
 
     private var runtimeFormatted: String {
         guard runningTime > 0 else { return "" }
-        let h = runningTime / 60
-        let m = runningTime % 60
-        return h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
+        return Film.formatMinutes(runningTime)
     }
 
     var body: some View {
