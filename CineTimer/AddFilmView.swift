@@ -63,7 +63,7 @@ struct AddFilmView: View {
                     switch runtimeMode {
                     case .minutes:
                         HStack {
-                            TextField("118", text: $runtimeInput)
+                            TextField("120", text: $runtimeInput)
                                 .keyboardType(.numberPad)
                             Text("minutes")
                                 .foregroundStyle(.secondary)
