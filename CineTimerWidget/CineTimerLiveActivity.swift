@@ -23,9 +23,9 @@ struct CineTimerLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(phaseLabel(phase))
+                    Text(phase.label)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(phaseColor(phase))
+                        .foregroundStyle(phase.color)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     ExpandedBottomView(state: state, phase: phase)
@@ -35,7 +35,7 @@ struct CineTimerLiveActivity: Widget {
                     .foregroundStyle(.green)
             } compactTrailing: {
                 CountdownText(state: state, phase: phase)
-                    .foregroundStyle(phaseColor(phase))
+                    .foregroundStyle(phase.color)
                     .frame(maxWidth: 58)
             } minimal: {
                 Image(systemName: "film.fill")
@@ -61,9 +61,9 @@ struct LockScreenLiveActivityView: View {
                     .foregroundStyle(.green)
                     .lineLimit(1)
                 Spacer()
-                Text(phaseLabel(phase))
+                Text(phase.label)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(phaseColor(phase))
+                    .foregroundStyle(phase.color)
             }
 
             switch phase {
@@ -178,25 +178,5 @@ struct CountdownText: View {
         case .ended:
             Image(systemName: "checkmark.circle.fill")
         }
-    }
-}
-
-// MARK: - Shared styling
-
-private func phaseLabel(_ phase: CineTimerActivityAttributes.ContentState.Phase) -> String {
-    switch phase {
-    case .upcoming: "Upcoming"
-    case .trailers: "Trailers"
-    case .playing: "Now Playing"
-    case .ended: "Ended"
-    }
-}
-
-private func phaseColor(_ phase: CineTimerActivityAttributes.ContentState.Phase) -> Color {
-    switch phase {
-    case .upcoming: .blue
-    case .trailers: .orange
-    case .playing: .green
-    case .ended: .secondary
     }
 }

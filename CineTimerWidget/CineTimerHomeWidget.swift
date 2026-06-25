@@ -60,12 +60,7 @@ struct FilmProvider: TimelineProvider {
             return FilmEntry(date: now, title: nil, state: nil)
         }
 
-        let state = CineTimerActivityAttributes.ContentState(
-            openedAt: now,
-            startTime: film.startTime,
-            filmStart: film.filmStart,
-            filmEnd: film.filmEnd
-        )
+        let state = CineTimerActivityAttributes.ContentState(film: film, openedAt: now)
         return FilmEntry(date: now, title: film.title, state: state)
     }
 }
@@ -111,9 +106,9 @@ struct FilmWidgetView: View {
                 Spacer(minLength: 0)
             }
 
-            Text(phaseLabel(phase))
+            Text(phase.label)
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(phaseColor(phase))
+                .foregroundStyle(phase.color)
 
             Spacer(minLength: 0)
 
@@ -172,25 +167,5 @@ struct FilmWidgetView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-    }
-}
-
-// MARK: - Styling
-
-private func phaseLabel(_ phase: CineTimerActivityAttributes.ContentState.Phase) -> String {
-    switch phase {
-    case .upcoming: "Upcoming"
-    case .trailers: "Trailers"
-    case .playing: "Now Playing"
-    case .ended: "Ended"
-    }
-}
-
-private func phaseColor(_ phase: CineTimerActivityAttributes.ContentState.Phase) -> Color {
-    switch phase {
-    case .upcoming: .blue
-    case .trailers: .orange
-    case .playing: .green
-    case .ended: .secondary
     }
 }

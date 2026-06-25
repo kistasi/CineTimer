@@ -28,15 +28,6 @@ final class FilmActivityManager: ObservableObject {
         String(describing: film.persistentModelID)
     }
 
-    private func contentState(for film: Film) -> CineTimerActivityAttributes.ContentState {
-        .init(
-            openedAt: .now,
-            startTime: film.startTime,
-            filmStart: film.filmStart,
-            filmEnd: film.filmEnd
-        )
-    }
-
     private func activity(for film: Film) -> Activity<CineTimerActivityAttributes>? {
         let fid = id(of: film)
         return Activity<CineTimerActivityAttributes>.activities.first { $0.attributes.filmID == fid }
@@ -98,7 +89,7 @@ final class FilmActivityManager: ObservableObject {
         do {
             let activity = try Activity.request(
                 attributes: CineTimerActivityAttributes(title: film.title, filmID: id(of: film)),
-                content: ActivityContent(state: contentState(for: film), staleDate: film.filmEnd)
+                content: ActivityContent(state: CineTimerActivityAttributes.ContentState(film: film), staleDate: film.filmEnd)
             )
             // `Activity.activities` doesn't reflect a just-requested activity
             // synchronously, so track the ID directly instead of via `refresh()`.
@@ -111,7 +102,7 @@ final class FilmActivityManager: ObservableObject {
     /// Push fresh dates to a running activity (e.g. after the film is edited).
     func update(for film: Film) {
         guard let activity = activity(for: film) else { return }
-        let content = ActivityContent(state: contentState(for: film), staleDate: film.filmEnd)
+        let content = ActivityContent(state: CineTimerActivityAttributes.ContentState(film: film), staleDate: film.filmEnd)
         Task { await activity.update(content) }
     }
 

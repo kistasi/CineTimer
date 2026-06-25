@@ -24,6 +24,17 @@ struct CineTimerActivityAttributes: ActivityAttributes {
 }
 
 extension CineTimerActivityAttributes.ContentState {
+    /// Build the live dates from a film. `openedAt` bounds the "until trailers"
+    /// countdown so it reads sensibly when the activity starts before showtime.
+    init(film: Film, openedAt: Date = .now) {
+        self.init(
+            openedAt: openedAt,
+            startTime: film.startTime,
+            filmStart: film.filmStart,
+            filmEnd: film.filmEnd
+        )
+    }
+
     enum Phase: String {
         case upcoming, trailers, playing, ended
     }
