@@ -1,8 +1,13 @@
+import Combine
 import SwiftUI
 
 struct FilmTimerView: View {
     let film: Film
     @State private var showingEdit = false
+    @State private var showingActivitiesDisabledAlert = false
+    @ObservedObject private var activities = FilmActivityManager.shared
+
+    private let endCheck = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -11,17 +16,46 @@ struct FilmTimerView: View {
         .navigationTitle(film.title)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                let running = activities.isRunning(for: film)
+                Button {
+                    if running {
+                        activities.stop(for: film)
+                    } else if activities.activitiesEnabled {
+                        activities.start(for: film)
+                    } else {
+                        showingActivitiesDisabledAlert = true
+                    }
+                } label: {
+                    Label(
+                        running ? "Stop Live Activity" : "Start Live Activity",
+                        systemImage: running ? "bell.slash" : "bell"
+                    )
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button { showingEdit = true } label: {
                     Label("Edit", systemImage: "pencil")
                 }
             }
         }
-        .sheet(isPresented: $showingEdit) {
+        .sheet(isPresented: $showingEdit, onDismiss: { activities.restart(for: film) }) {
             AddFilmView(film: film)
         }
-        .onAppear   { UIApplication.shared.isIdleTimerDisabled = true }
+        .alert("Live Activities Are Off", isPresented: $showingActivitiesDisabledAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Turn on Live Activities for CineTimer in Settings to show the timer on the Lock Screen and Dynamic Island.")
+        }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+            activities.start(for: film)
+            activities.reloadWidgets()
+        }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .onReceive(endCheck) { _ in
+            if Date.now >= film.filmEnd { activities.finish(for: film) }
+        }
     }
 
     private func timerContent(at now: Date) -> some View {

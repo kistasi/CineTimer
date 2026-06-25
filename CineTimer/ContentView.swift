@@ -1,11 +1,17 @@
+import Combine
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\Film.startTime, order: .forward)]) private var films: [Film]
     @State private var showingAddFilm = false
     @State private var filmToEdit: Film?
+    @ObservedObject private var activities = FilmActivityManager.shared
+
+    // Coarse cadence is enough to catch showtime/end transitions while the list is open.
+    private let activitySync = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     var body: some View {
         NavigationStack {
@@ -30,6 +36,17 @@ struct ContentView: View {
             .sheet(item: $filmToEdit) { film in
                 AddFilmView(film: film)
             }
+            .onAppear(perform: syncActivities)
+            .onReceive(activitySync) { _ in syncActivities() }
+        }
+    }
+
+    /// Auto-start / clean up Live Activities for films that are currently live,
+    /// so the activity appears without having to open the timer screen.
+    private func syncActivities() {
+        let now = Date.now
+        for film in films {
+            activities.ensureActivity(for: film, at: now)
         }
     }
 
@@ -52,7 +69,11 @@ struct ContentView: View {
                         FilmRow(film: film, now: context.date)
                     }
                     .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) { modelContext.delete(film) } label: {
+                        Button(role: .destructive) {
+                            modelContext.delete(film)
+                            try? modelContext.save()
+                            WidgetCenter.shared.reloadAllTimelines()
+                        } label: {
                             Label("Delete", systemImage: "trash")
                         }
                         Button { filmToEdit = film } label: {

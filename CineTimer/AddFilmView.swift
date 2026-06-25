@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct AddFilmView: View {
     @Environment(\.modelContext) private var modelContext
@@ -126,6 +127,8 @@ struct AddFilmView: View {
                 trailerBuffer: trailerBuffer
             ))
         }
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
         dismiss()
     }
 }

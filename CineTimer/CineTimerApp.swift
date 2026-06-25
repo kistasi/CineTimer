@@ -3,13 +3,7 @@ import SwiftData
 
 @main
 struct CineTimerApp: App {
-    var sharedModelContainer: ModelContainer = {
-        do {
-            return try ModelContainer(for: Film.self)
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    let sharedModelContainer: ModelContainer = SharedStore.makeContainer()
 
     var body: some Scene {
         WindowGroup {

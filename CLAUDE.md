@@ -25,16 +25,16 @@ Open `CineTimer.xcodeproj` in Xcode to build and run interactively.
 
 ## Architecture
 
-### Data model — `Film.swift`
+### Data model — `Shared/Film.swift`
 
-`Film` is the sole SwiftData `@Model`. Stored properties:
+`Film` is the sole SwiftData `@Model`. It lives in `Shared/` with explicit membership in **both** the app and the widget-extension targets, so the Home Screen widget can fetch the same rows. Stored properties:
 
-| Property | Type | Notes |
-|---|---|---|
-| `title` | `String` | |
-| `runningTime` | `Int` | minutes |
-| `startTime` | `Date` | when trailers/commercials begin |
-| `trailerBuffer` | `Int` | minutes before film; default `= 15` (inline default enables lightweight SwiftData migration) |
+| Property        | Type     | Notes                                                                                        |
+| --------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `title`         | `String` |                                                                                              |
+| `runningTime`   | `Int`    | minutes                                                                                      |
+| `startTime`     | `Date`   | when trailers/commercials begin                                                              |
+| `trailerBuffer` | `Int`    | minutes before film; default `= 15` (inline default enables lightweight SwiftData migration) |
 
 Computed properties (`filmStart`, `filmEnd`) and the `status(at:) -> FilmStatus` method live on the model. `FilmStatus` is a top-level enum with cases `.upcoming`, `.trailers`, `.playing(progress:elapsed:remaining:)`, `.ended`.
 
@@ -46,9 +46,28 @@ Computed properties (`filmStart`, `filmEnd`) and the `status(at:) -> FilmStatus`
 
 ### Data layer
 
-Persistence is handled entirely by SwiftData. The `ModelContainer` (on-disk store) is created in `CineTimerApp` and injected via `.modelContainer(sharedModelContainer)`.
+Persistence is handled entirely by SwiftData. The `ModelContainer` is built by `SharedStore.makeContainer()` (in `Shared/SharedModelContainer.swift`, a member of both targets), which points the store at the **App Group** container `group.com.kistasi.CineTimer` via `ModelConfiguration(groupContainer:)`. This shared location is what lets the widget extension (a separate process) read the films. The app creates it in `CineTimerApp` and injects it via `.modelContainer(sharedModelContainer)`; the widget's `FilmProvider` opens its own `ModelContext` against the same store.
+
+The App Group is declared in entitlements on both targets (`CineTimer/CineTimer.entitlements`, `CineTimerWidget/CineTimerWidget.entitlements`), wired via `CODE_SIGN_ENTITLEMENTS`. The group ID must match the `appGroupID` constant in `SharedStore`.
 
 When adding a new stored property to `Film`, assign an inline default value (e.g. `var foo: Int = 0`) so SwiftData can backfill existing rows during lightweight migration without a fatal error.
+
+### Live Activity
+
+The film timer surfaces on the Lock Screen / Dynamic Island via a Live Activity, implemented across three pieces:
+
+- **`Shared/CineTimerActivityAttributes.swift`** — the `ActivityAttributes` type, shared (explicit target membership) between the **CineTimer** app and the **CineTimerWidget** extension. It lives outside both file-system-synchronized groups so it can belong to both targets. `ContentState` carries the key dates (`openedAt`, `startTime`, `filmStart`, `filmEnd`); a `phase(at:)` helper and per-phase `ClosedRange<Date>` properties drive the widget UI.
+- **`CineTimer/FilmActivityManager.swift`** — a `@MainActor` singleton (`ObservableObject`) that requests / updates / ends the activity through ActivityKit. Activities are keyed to a film by `String(describing: film.persistentModelID)` stored in the attributes. It exposes `activitiesEnabled` (`ActivityAuthorizationInfo().areActivitiesEnabled`). Two start paths: `start(for:)` is the **explicit** path (bell toggle, timer `onAppear`, edit-restart) and clears suppression; `ensureActivity(for:at:)` is the **auto** path called from `ContentView` while the list is visible — it starts an activity for any film between its `startTime` and `filmEnd` that isn't already live or suppressed, and cleans up (`finish`) once a film ends. `stop(for:)` (the bell turning it off) adds the film to `suppressedFilmIDs` so the auto path won't immediately restart it; `finish(for:)` ends without suppressing (natural end). `FilmTimerView` exposes the bell toolbar toggle, which shows a "Live Activities Are Off" alert pointing to Settings when authorization is off instead of silently no-opping.
+  - **Gotcha:** `Activity.activities` does not reflect a just-`request`ed activity synchronously, so `requestActivity` inserts the new ID into `activeFilmIDs` directly rather than relying on `refresh()` — otherwise the bell's running-state never updates.
+- **`CineTimerWidget/`** — the widget-extension target (`CineTimerWidgetBundle`), bundling **two** widgets. The Lock Screen and Dynamic Island render self-animating progress/countdowns with `ProgressView(timerInterval:)` and `Text(timerInterval:)`, so they keep ticking without per-second pushes from the app.
+
+### Home Screen widget
+
+`CineTimerWidget/CineTimerHomeWidget.swift` adds a `StaticConfiguration` Home Screen widget (`systemSmall` / `systemMedium`) alongside the Live Activity in `CineTimerWidgetBundle`. Its `FilmProvider` (a `TimelineProvider`) fetches from the shared SwiftData store and picks the most relevant film — the one in progress, else the soonest upcoming, ignoring ended ones. It reuses `CineTimerActivityAttributes.ContentState` for the phase/range helpers, so the same `Text(timerInterval:)` / `ProgressView(timerInterval:)` self-animation drives the widget; the timeline reloads at the next phase boundary (`startTime` / `filmStart` / `filmEnd`) so the labels/sections flip, then advances to the next film.
+
+**Widget refresh:** WidgetKit caches timelines, so the app must call `WidgetCenter.shared.reloadAllTimelines()` whenever films change — wired into `AddFilmView.save()` (add/edit), `ContentView`'s delete swipe, and `FilmTimerView.onAppear` (also exposed as `FilmActivityManager.reloadWidgets()`). Each mutation site also calls `modelContext.save()` so the shared store is flushed before the widget re-reads it. Without these, the widget shows stale data (e.g. "No film scheduled" while a film is playing).
+
+`NSSupportsLiveActivities = YES` is set on the app target via `INFOPLIST_KEY_NSSupportsLiveActivities`. The widget extension uses an explicit `CineTimerWidget/Info.plist` (excluded from its synchronized group via a membership exception) declaring the `com.apple.widgetkit-extension` point. Its bundle ID must stay prefixed by the app's (`com.kistasi.CineTimer.CineTimerWidget`), and the app embeds the `.appex` via an "Embed Foundation Extensions" copy-files phase.
 
 ### Testing
 
