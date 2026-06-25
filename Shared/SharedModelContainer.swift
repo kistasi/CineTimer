@@ -19,4 +19,16 @@ enum SharedStore {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }
+
+    /// A throwaway, process-local store. Used by UI tests (launched with the
+    /// `-uitesting` argument) so they start from a known state instead of the
+    /// shared App Group store, and by unit tests that need a real container.
+    static func makeInMemoryContainer() -> ModelContainer {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        do {
+            return try ModelContainer(for: Film.self, configurations: configuration)
+        } catch {
+            fatalError("Could not create in-memory ModelContainer: \(error)")
+        }
+    }
 }

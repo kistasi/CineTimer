@@ -51,6 +51,7 @@ struct AddFilmView: View {
             Form {
                 Section("Film") {
                     TextField("Title", text: $title)
+                        .accessibilityIdentifier("titleField")
                 }
 
                 Section {
@@ -66,6 +67,7 @@ struct AddFilmView: View {
                         HStack {
                             TextField("120", text: $runtimeInput)
                                 .keyboardType(.numberPad)
+                                .accessibilityIdentifier("runtimeMinutesField")
                             Text("minutes")
                                 .foregroundStyle(.secondary)
                         }
@@ -108,6 +110,7 @@ struct AddFilmView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "Save" : "Add") { save() }
                         .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || runningTime == 0)
+                        .accessibilityIdentifier("saveFilmButton")
                 }
             }
         }

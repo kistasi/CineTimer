@@ -28,6 +28,7 @@ struct ContentView: View {
                     Button { showingAddFilm = true } label: {
                         Label("Add Film", systemImage: "plus")
                     }
+                    .accessibilityIdentifier("addFilmButton")
                 }
             }
             .sheet(isPresented: $showingAddFilm) {
@@ -58,6 +59,7 @@ struct ContentView: View {
         } actions: {
             Button("Add Film") { showingAddFilm = true }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("emptyAddFilmButton")
         }
     }
 

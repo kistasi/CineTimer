@@ -152,4 +152,24 @@ struct FilmStatusTests {
         }
         #expect(r1 > r2)
     }
+
+    @Test func zeroBufferGoesStraightToPlaying() {
+        // No trailers buffer: at showtime the film is already playing.
+        let f = Film(title: "Movie", runningTime: 90, startTime: start, trailerBuffer: 0)
+        if case .playing = f.status(at: start) { } else {
+            Issue.record("Expected .playing at showtime with zero buffer, got \(f.status(at: start))")
+        }
+    }
+}
+
+// MARK: - formattedDuration
+
+@Suite("Film.formattedDuration")
+struct FormattedDurationTests {
+
+    @Test func mirrorsFormatMinutes() {
+        let f = Film(title: "Movie", runningTime: 142, startTime: .now)
+        #expect(f.formattedDuration == Film.formatMinutes(142))
+        #expect(f.formattedDuration == "2h 22m")
+    }
 }
