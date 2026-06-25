@@ -70,6 +70,7 @@ struct ContentView: View {
                     }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
+                            activities.remove(for: film)
                             modelContext.delete(film)
                             try? modelContext.save()
                             WidgetCenter.shared.reloadAllTimelines()

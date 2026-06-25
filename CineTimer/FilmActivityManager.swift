@@ -144,11 +144,24 @@ final class FilmActivityManager: ObservableObject {
         }
     }
 
+    /// End and forget the activity for a film that's being deleted. Captures the
+    /// ID synchronously so the async end doesn't touch the deleted model object.
+    func remove(for film: Film) {
+        let fid = id(of: film)
+        activeFilmIDs.remove(fid)
+        suppressedFilmIDs.remove(fid)
+        Task { await endActivities(withID: fid) }
+    }
+
     private func endActivities(for film: Film) async {
         let fid = id(of: film)
+        await endActivities(withID: fid)
+        activeFilmIDs.remove(fid)
+    }
+
+    private func endActivities(withID fid: String) async {
         for activity in Activity<CineTimerActivityAttributes>.activities where activity.attributes.filmID == fid {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
-        activeFilmIDs.remove(fid)
     }
 }
