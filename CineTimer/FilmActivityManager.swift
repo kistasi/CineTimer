@@ -13,12 +13,9 @@ import WidgetKit
 final class FilmActivityManager: ObservableObject {
     static let shared = FilmActivityManager()
 
-    /// IDs of films that currently have a running activity, for UI state.
+    /// IDs of films that currently have a running activity, used to avoid
+    /// requesting a duplicate activity for a film that's already live.
     @Published private(set) var activeFilmIDs: Set<String> = []
-
-    /// Films the user explicitly stopped. The auto-start path (`ensureActivity`)
-    /// skips these so a stopped activity doesn't immediately come back to life.
-    private var suppressedFilmIDs: Set<String> = []
 
     private init() {
         refresh()
@@ -50,17 +47,15 @@ final class FilmActivityManager: ObservableObject {
         )
     }
 
-    /// Explicit user start (bell toggle, opening the timer, edit-restart). Clears
-    /// any prior suppression so the activity comes back. No-op if the film has
-    /// already ended or the user has Live Activities disabled.
+    /// Start the activity for a film (opening the timer, edit-restart). No-op if
+    /// the film has already ended or the user has Live Activities disabled.
     func start(for film: Film) {
-        suppressedFilmIDs.remove(id(of: film))
         requestActivity(for: film)
     }
 
     /// Auto-start path used while the film list is visible: starts an activity for
     /// a film that has reached showtime and is still running, unless it's already
-    /// live or the user stopped it. Also cleans up once a film has ended.
+    /// live. Also cleans up once a film has ended.
     func ensureActivity(for film: Film, at now: Date = .now) {
         let fid = id(of: film)
 
@@ -71,12 +66,11 @@ final class FilmActivityManager: ObservableObject {
 
         guard now >= film.startTime else { return }        // not at showtime yet
         guard !activeFilmIDs.contains(fid) else { return }  // already live
-        guard !suppressedFilmIDs.contains(fid) else { return } // user stopped it
         requestActivity(for: film)
     }
 
     /// Request (or refresh) the activity. No-op if the film has ended or Live
-    /// Activities are disabled. Does not touch suppression.
+    /// Activities are disabled.
     private func requestActivity(for film: Film) {
         guard activitiesEnabled else { return }
         guard Date.now < film.filmEnd else { return }
@@ -119,16 +113,8 @@ final class FilmActivityManager: ObservableObject {
         }
     }
 
-    /// User-initiated stop (bell toggle). Suppresses auto-restart from the list.
-    func stop(for film: Film) {
-        suppressedFilmIDs.insert(id(of: film))
-        Task {
-            await endActivities(for: film)
-        }
-    }
-
-    /// End because the film is over — no suppression, so a re-scheduled film can
-    /// start a fresh activity later.
+    /// End because the film is over. A re-scheduled film can start a fresh
+    /// activity later.
     func finish(for film: Film) {
         Task {
             await endActivities(for: film)
@@ -150,7 +136,6 @@ final class FilmActivityManager: ObservableObject {
     func remove(for film: Film) {
         let fid = id(of: film)
         activeFilmIDs.remove(fid)
-        suppressedFilmIDs.remove(fid)
         Task { await endActivities(withID: fid) }
     }
 

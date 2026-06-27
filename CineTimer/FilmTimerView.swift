@@ -7,7 +7,6 @@ struct FilmTimerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var showingEdit = false
-    @State private var showingActivitiesDisabledAlert = false
     @State private var showingDeleteConfirmation = false
     @ObservedObject private var activities = FilmActivityManager.shared
 
@@ -20,23 +19,6 @@ struct FilmTimerView: View {
         .navigationTitle(film.title)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                let running = activities.isRunning(for: film)
-                Button {
-                    if running {
-                        activities.stop(for: film)
-                    } else if activities.activitiesEnabled {
-                        activities.start(for: film)
-                    } else {
-                        showingActivitiesDisabledAlert = true
-                    }
-                } label: {
-                    Label(
-                        running ? "Stop Live Activity" : "Start Live Activity",
-                        systemImage: running ? "bell.slash" : "bell"
-                    )
-                }
-            }
             ToolbarItem(placement: .primaryAction) {
                 Button { showingEdit = true } label: {
                     Label("Edit", systemImage: "pencil")
@@ -52,11 +34,6 @@ struct FilmTimerView: View {
         }
         .sheet(isPresented: $showingEdit, onDismiss: { activities.restart(for: film) }) {
             AddFilmView(film: film)
-        }
-        .alert("Live Activities Are Off", isPresented: $showingActivitiesDisabledAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Turn on Live Activities for CineTimer in Settings to show the timer on the Lock Screen and Dynamic Island.")
         }
         .confirmationDialog("Delete \(film.title)?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { deleteFilm() }
