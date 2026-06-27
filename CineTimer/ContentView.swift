@@ -8,6 +8,7 @@ struct ContentView: View {
     @Query(sort: [SortDescriptor(\Film.startTime, order: .forward)]) private var films: [Film]
     @State private var showingAddFilm = false
     @State private var filmToEdit: Film?
+    @State private var filmToDelete: Film?
     @ObservedObject private var activities = FilmActivityManager.shared
 
     // Coarse cadence is enough to catch showtime/end transitions while the list is open.
@@ -37,6 +38,18 @@ struct ContentView: View {
             .sheet(item: $filmToEdit) { film in
                 AddFilmView(film: film)
             }
+            .confirmationDialog(
+                filmToDelete.map { "Delete \($0.title)?" } ?? "Delete film?",
+                isPresented: Binding(get: { filmToDelete != nil }, set: { if !$0 { filmToDelete = nil } }),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let film = filmToDelete { deleteFilm(film) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This film will be removed permanently.")
+            }
             .onAppear(perform: syncActivities)
             .onReceive(activitySync) { _ in syncActivities() }
         }
@@ -49,6 +62,13 @@ struct ContentView: View {
         for film in films {
             activities.ensureActivity(for: film, at: now)
         }
+    }
+
+    private func deleteFilm(_ film: Film) {
+        activities.remove(for: film)
+        modelContext.delete(film)
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private var emptyState: some View {
@@ -85,10 +105,7 @@ struct ContentView: View {
                     }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
-                            activities.remove(for: film)
-                            modelContext.delete(film)
-                            try? modelContext.save()
-                            WidgetCenter.shared.reloadAllTimelines()
+                            filmToDelete = film
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }

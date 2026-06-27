@@ -1,10 +1,15 @@
 import Combine
+import SwiftData
 import SwiftUI
+import WidgetKit
 
 struct FilmTimerView: View {
     let film: Film
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var showingEdit = false
     @State private var showingActivitiesDisabledAlert = false
+    @State private var showingDeleteConfirmation = false
     @ObservedObject private var activities = FilmActivityManager.shared
 
     private let endCheck = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
@@ -38,6 +43,13 @@ struct FilmTimerView: View {
                     Label("Edit", systemImage: "pencil")
                 }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showingDeleteConfirmation = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
         .sheet(isPresented: $showingEdit, onDismiss: { activities.restart(for: film) }) {
             AddFilmView(film: film)
@@ -46,6 +58,12 @@ struct FilmTimerView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Turn on Live Activities for CineTimer in Settings to show the timer on the Lock Screen and Dynamic Island.")
+        }
+        .confirmationDialog("Delete \(film.title)?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { deleteFilm() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This film will be removed permanently.")
         }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
@@ -56,6 +74,14 @@ struct FilmTimerView: View {
         .onReceive(endCheck) { _ in
             if Date.now >= film.filmEnd { activities.finish(for: film) }
         }
+    }
+
+    private func deleteFilm() {
+        activities.remove(for: film)
+        modelContext.delete(film)
+        try? modelContext.save()
+        WidgetCenter.shared.reloadAllTimelines()
+        dismiss()
     }
 
     private func timerContent(at now: Date) -> some View {
