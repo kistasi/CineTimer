@@ -135,6 +135,16 @@ final class FilmActivityManager: ObservableObject {
         }
     }
 
+    /// Delete a film: tear down its activity, remove the row, flush the store, and
+    /// refresh the widget. The single place this sequence lives so the two call
+    /// sites (list swipe, timer Trash button) can't drift.
+    func delete(_ film: Film, in context: ModelContext) {
+        remove(for: film)
+        context.delete(film)
+        try? context.save()
+        reloadWidgets()
+    }
+
     /// End and forget the activity for a film that's being deleted. Captures the
     /// ID synchronously so the async end doesn't touch the deleted model object.
     func remove(for film: Film) {

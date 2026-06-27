@@ -10,16 +10,24 @@ CineTimer is an iOS SwiftUI app that replicates the video-player progress experi
 
 All build, test, and run operations go through Xcode or `xcodebuild`. There is no package manager (no SPM `Package.swift`, no CocoaPods, no Carthage).
 
+Use the dedicated **`CineTimer`** simulator (an iPhone 17 Pro on iOS 26.5). Targeting it by its unique name avoids the ambiguity that arises when several runtimes each expose an `iPhone 17` device — an ambiguous `-destination` makes `xcodebuild` silently cold-boot an arbitrary match and appear to hang. Create it once with:
+
+```bash
+xcrun simctl create "CineTimer" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-5
+```
+
 ```bash
 # Build (simulator)
-xcodebuild -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' build
+xcodebuild -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=CineTimer' build
 
 # Run unit tests
-xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:CineTimerTests
+xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=CineTimer' -only-testing:CineTimerTests
 
 # Run UI tests
-xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=iPhone 17' -only-testing:CineTimerUITests
+xcodebuild test -project CineTimer.xcodeproj -scheme CineTimer -destination 'platform=iOS Simulator,name=CineTimer' -only-testing:CineTimerUITests
 ```
+
+Boot it first (`xcrun simctl boot CineTimer`) to skip the per-run cold-boot wait, or substitute `id=<udid>` for an already-booted device (`xcrun simctl list devices booted`).
 
 Open `CineTimer.xcodeproj` in Xcode to build and run interactively.
 

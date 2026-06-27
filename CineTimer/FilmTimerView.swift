@@ -1,7 +1,6 @@
 import Combine
 import SwiftData
 import SwiftUI
-import WidgetKit
 
 struct FilmTimerView: View {
     let film: Film
@@ -77,10 +76,7 @@ struct FilmTimerView: View {
     }
 
     private func deleteFilm() {
-        activities.remove(for: film)
-        modelContext.delete(film)
-        try? modelContext.save()
-        WidgetCenter.shared.reloadAllTimelines()
+        activities.delete(film, in: modelContext)
         dismiss()
     }
 

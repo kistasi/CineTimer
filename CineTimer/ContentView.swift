@@ -1,7 +1,6 @@
 import Combine
 import SwiftUI
 import SwiftData
-import WidgetKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -65,10 +64,7 @@ struct ContentView: View {
     }
 
     private func deleteFilm(_ film: Film) {
-        activities.remove(for: film)
-        modelContext.delete(film)
-        try? modelContext.save()
-        WidgetCenter.shared.reloadAllTimelines()
+        activities.delete(film, in: modelContext)
     }
 
     private var emptyState: some View {
