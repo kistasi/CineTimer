@@ -65,10 +65,23 @@ struct ContentView: View {
 
     private var filmList: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
+            let now = context.date
+            let groups = groupedFilms(at: now)
             List {
+                section("Running", groups.running, now: now)
+                section("Upcoming", groups.upcoming, now: now)
+                section("Ended", groups.ended, now: now)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func section(_ title: String, _ films: [Film], now: Date) -> some View {
+        if !films.isEmpty {
+            Section(title) {
                 ForEach(films) { film in
                     NavigationLink(destination: FilmTimerView(film: film)) {
-                        FilmRow(film: film, now: context.date)
+                        FilmRow(film: film, now: now)
                     }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
@@ -87,6 +100,22 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Partition the films (already sorted by `startTime`) into the three
+    /// list sections based on their status at `now`.
+    private func groupedFilms(at now: Date) -> (running: [Film], upcoming: [Film], ended: [Film]) {
+        var running: [Film] = []
+        var upcoming: [Film] = []
+        var ended: [Film] = []
+        for film in films {
+            switch film.status(at: now) {
+            case .upcoming:            upcoming.append(film)
+            case .trailers, .playing:  running.append(film)
+            case .ended:               ended.append(film)
+            }
+        }
+        return (running, upcoming, ended)
     }
 
 }

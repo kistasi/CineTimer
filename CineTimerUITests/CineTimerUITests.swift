@@ -52,6 +52,14 @@ final class CineTimerUITests: XCTestCase {
     }
 
     @MainActor
+    func testSeededPlayingFilmAppearsInRunningSection() throws {
+        let app = launch(seeded: true)
+        XCTAssertTrue(app.staticTexts["Test Film"].waitForExistence(timeout: 5))
+        // A mid-playback film is grouped under the "Running" section header.
+        XCTAssertTrue(app.staticTexts["Running"].exists)
+    }
+
+    @MainActor
     func testOpeningFilmShowsTimer() throws {
         let app = launch(seeded: true)
         let row = app.staticTexts["Test Film"]
@@ -67,7 +75,9 @@ final class CineTimerUITests: XCTestCase {
         let app = launch(seeded: true)
         XCTAssertTrue(app.staticTexts["Test Film"].waitForExistence(timeout: 5))
 
-        app.cells.firstMatch.swipeLeft()
+        // Target the film's row directly: with section headers present, the first
+        // `cell` may be a header rather than the film row.
+        app.cells.containing(.staticText, identifier: "Test Film").firstMatch.swipeLeft()
         let delete = app.buttons["Delete"]
         XCTAssertTrue(delete.waitForExistence(timeout: 5))
         delete.tap()
