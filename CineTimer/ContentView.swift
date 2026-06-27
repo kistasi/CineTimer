@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showingAddFilm = false
     @State private var filmToEdit: Film?
     @State private var filmToDelete: Film?
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject private var activities = FilmActivityManager.shared
 
     // Coarse cadence is enough to catch showtime/end transitions while the list is open.
@@ -51,6 +52,10 @@ struct ContentView: View {
             }
             .onAppear(perform: syncActivities)
             .onReceive(activitySync) { _ in syncActivities() }
+            // Retry starts that the foreground guard skipped once we're back up front.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { syncActivities() }
+            }
         }
     }
 

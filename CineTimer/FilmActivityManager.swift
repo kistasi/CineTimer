@@ -2,6 +2,7 @@ import ActivityKit
 import Combine
 import Foundation
 import SwiftData
+import UIKit
 import WidgetKit
 
 /// Starts, updates, and ends the Live Activity for a `Film`.
@@ -69,11 +70,18 @@ final class FilmActivityManager: ObservableObject {
         requestActivity(for: film)
     }
 
-    /// Request (or refresh) the activity. No-op if the film has ended or Live
-    /// Activities are disabled.
+    /// Request (or refresh) the activity. No-op if the film has ended, Live
+    /// Activities are disabled, or the app isn't in the foreground.
     private func requestActivity(for film: Film) {
         guard activitiesEnabled else { return }
         guard Date.now < film.filmEnd else { return }
+        // ActivityKit rejects `request` with `.visibility` unless the app is in
+        // the foreground. The auto-start timer / `onAppear` can fire while
+        // backgrounded or mid-transition, so refuse those and let the next
+        // foreground sync retry. An already-running activity can still update.
+        if activity(for: film) == nil, UIApplication.shared.applicationState == .background {
+            return
+        }
 
         if activity(for: film) != nil {
             update(for: film)
