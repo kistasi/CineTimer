@@ -75,7 +75,7 @@ struct CineTimerHomeWidget: Widget {
         }
         .configurationDisplayName("Now Playing")
         .description("The film you're watching, or the next one coming up.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall])
     }
 }
 
@@ -83,7 +83,6 @@ struct CineTimerHomeWidget: Widget {
 
 struct FilmWidgetView: View {
     let entry: FilmEntry
-    @Environment(\.widgetFamily) private var family
 
     var body: some View {
         if let title = entry.title, let state = entry.state {
@@ -96,7 +95,7 @@ struct FilmWidgetView: View {
     @ViewBuilder
     private func content(title: String, state: CineTimerActivityAttributes.ContentState) -> some View {
         let phase = state.phase()
-        VStack(alignment: .leading, spacing: family == .systemMedium ? 10 : 6) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: "film.fill")
                     .foregroundStyle(.green)
@@ -134,12 +133,6 @@ struct FilmWidgetView: View {
             case .ended:
                 Text("Enjoy the credits!")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if family == .systemMedium {
-                Text("ends \(state.filmEnd.formatted(date: .omitted, time: .shortened))")
-                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
