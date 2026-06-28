@@ -48,6 +48,15 @@ struct FilmActivityManagerTests {
         #expect(manager.isRunning(for: film) == false)
     }
 
+    @Test func startBeforeShowtimeDoesNotStart() throws {
+        // Opening the timer for a film hours/days away must not surface a Live
+        // Activity — it should only start once trailers have begun.
+        let film = try insertedFilm(startOffset: 3600)
+        let manager = FilmActivityManager.shared
+        manager.start(for: film)
+        #expect(manager.isRunning(for: film) == false)
+    }
+
     @Test func ensureActivityAfterEndDoesNotStart() throws {
         // Film ended in the past; ensureActivity should clean up / stay off.
         let film = try insertedFilm(startOffset: -10 * 3600)

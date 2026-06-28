@@ -65,16 +65,18 @@ final class FilmActivityManager: ObservableObject {
             return
         }
 
-        guard now >= film.startTime else { return }        // not at showtime yet
         guard !activeFilmIDs.contains(fid) else { return }  // already live
         requestActivity(for: film)
     }
 
-    /// Request (or refresh) the activity. No-op if the film has ended, Live
-    /// Activities are disabled, or the app isn't in the foreground.
+    /// Request (or refresh) the activity. No-op if the film hasn't reached
+    /// showtime yet or has ended, Live Activities are disabled, or the app isn't
+    /// in the foreground.
     private func requestActivity(for film: Film) {
         guard activitiesEnabled else { return }
-        guard Date.now < film.filmEnd else { return }
+        // Don't start before trailers begin — a film hours or days away shouldn't
+        // surface a Live Activity just because its timer was opened.
+        guard Date.now >= film.startTime, Date.now < film.filmEnd else { return }
         // ActivityKit rejects `request` with `.visibility` unless the app is in
         // the foreground. The auto-start timer / `onAppear` can fire while
         // backgrounded or mid-transition, so refuse those and let the next
