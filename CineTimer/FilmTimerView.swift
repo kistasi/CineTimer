@@ -89,6 +89,11 @@ struct FilmTimerView: View {
             icon: "film"
         )
         infoCard(
+            value: film.startTime.formatted(date: .omitted, time: .shortened),
+            label: "trailers start at",
+            icon: "film.fill"
+        )
+        infoCard(
             value: film.filmStart.formatted(date: .omitted, time: .shortened),
             label: "film starts at",
             icon: "play.fill"
